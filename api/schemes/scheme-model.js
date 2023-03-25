@@ -72,7 +72,7 @@ where sc.scheme_id = st.scheme_id and sc.scheme_id = 1
   }
 }
 
-function findSteps(scheme_id) {
+async function findSteps(scheme_id) {
   // EXERCISE C
   /*
     1C- Build a query in Knex that returns the following data.
@@ -94,6 +94,13 @@ function findSteps(scheme_id) {
         }
       ]
   */
+
+  const result = await db('steps')
+    .where('steps.scheme_id', scheme_id)
+    .join('schemes', 'schemes.scheme_id', '=', 'steps.scheme_id')
+    .select('step_id', 'step_number', 'instructions', 'scheme_name')
+    .orderBy('step_number', 'asc');
+  return result;
 }
 
 function add(scheme) {
@@ -101,6 +108,11 @@ function add(scheme) {
   /*
     1D- This function creates a new scheme and resolves to _the newly created scheme_.
   */
+  return db('schemes')
+    .insert(scheme)
+    .then((ids) => {
+      return getById(ids[0]);
+    });
 }
 
 function addStep(scheme_id, step) {
@@ -110,6 +122,11 @@ function addStep(scheme_id, step) {
     and resolves to _all the steps_ belonging to the given `scheme_id`,
     including the newly created one.
   */
+  return db('steps')
+    .insert({ ...step, scheme_id })
+    .then(() => {
+      return findSteps(scheme_id);
+    });
 }
 
 module.exports = {
